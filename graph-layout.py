@@ -15,6 +15,19 @@ import sys, pygame, random, math, os, argparse
 from pygame.locals import *
 from euclid import *
 
+import datetime
+from mongoengine import connect
+from physics_topology import PhysicsTopologyNode, PhysicsTopologyLink
+
+MONGODB = {
+    'host': '192.168.6.252',
+    'port': 27017,
+    'username': 'opsmart_demo',
+    'password': 'q1w2e3r4',
+    'db_name': 'opsmart_demo'
+}
+
+
 def read_graph(input_file=""):
     V = []
     E = []
@@ -29,14 +42,50 @@ def read_graph(input_file=""):
         V.append(f.readline().strip())
         
     for line in f:
+        #print line.strip().split(" ", 2)
         E.append(line.strip().split(" ", 2))
     
     return (V, E)
 
+def read_graph2(input_file=""):
+    V = []
+    E = []
+
+    connect(MONGODB['db_name'],
+            username=MONGODB['username'],
+            password=MONGODB['password'],
+            host=MONGODB['host'],
+            port=MONGODB['port'])
+
+    count = 0
+    limit = 500
+    limit = 100
+    for node in PhysicsTopologyNode.objects():
+        #print node.host_id
+        V.append(node.host_id)
+        count += 1
+        if count >= limit:
+            break
+
+    for link in PhysicsTopologyLink.objects():
+        source = link.source_node_id
+        target = link.target_node_id
+        if source not in V:
+            print source
+            continue
+        if target not in V:
+            print target
+            continue
+
+        E.append([source, target])
+
+    print len(V), len(E)
+    return (V, E)
+
 class LayoutGraph():
 
-    SCREEN_WIDTH = 800
-    SCREEN_HEIGHT = 600
+    SCREEN_WIDTH = 1920
+    SCREEN_HEIGHT = 1080
     
     START_TEMPERATURE = 100
     
@@ -44,7 +93,7 @@ class LayoutGraph():
     TICKS_PER_FRAME = 1000 / MAX_FPS
     TICKS_PER_SECOND = 1000
     
-    NODE_RADIUS = 8
+    NODE_RADIUS = 5
     
     FONT_SIZE = 20
 
@@ -216,6 +265,7 @@ class LayoutGraph():
                 self.EDGE_COLOR,
                 (self.pos[node1].x, self.pos[node1].y),
                 (self.pos[node2].x, self.pos[node2].y))
+            #print self.pos[node1].x, self.pos[node1].y
         
         # Dibuja los vertices
         for node in V:
@@ -226,10 +276,10 @@ class LayoutGraph():
                 0
                 )
             
-            label_pos = self.label[node].get_rect()
-            label_pos.centerx = self.pos[node].x
-            label_pos.centery = self.pos[node].y
-            self.screen.blit(self.label[node], label_pos)
+            # label_pos = self.label[node].get_rect()
+            # label_pos.centerx = self.pos[node].x
+            # label_pos.centery = self.pos[node].y
+            # self.screen.blit(self.label[node], label_pos)
             
     def draw_frame(self):
         # Dibuja el cuadro
@@ -243,6 +293,15 @@ class LayoutGraph():
         pygame.display.flip()
         
     def layout(self):
+        # start = datetime.datetime.now()
+        # print start
+
+        # for x in xrange(1,100):
+        #     self.step()
+
+        # end = datetime.datetime.now()
+        # print end, end - start
+
         while True:
             # Administrar los eventos.
             self.handle_events()
@@ -388,12 +447,12 @@ def main():
     parser.add_argument('-c-a',
                         type=float,
                         help='attraction constant (default 0.03)',
-                        default=0.03)
+                        default=0.02)
                         
     parser.add_argument('-c-r',
                         type=float,
                         help='repulsion constant (default 2500)',
-                        default=2500.0)
+                        default=1000.0)
                         
     parser.add_argument('-refresh',
                         type=int,
@@ -402,8 +461,9 @@ def main():
     
     args = parser.parse_args()  
     
-    G = read_graph(args.file)
-    
+    #G = read_graph(args.file)
+    G = read_graph2(args.file)
+
     layout_gr = LayoutGraph(filename=args.file,
         grafo=G,
         iters=args.iters,
