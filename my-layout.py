@@ -62,7 +62,10 @@ def read_file(input_file=""):
     return (V, E)
 
 
-def read_graph():
+def read_topology():
+    """
+    read_topology
+    """
     V = []
     E = []
 
@@ -78,16 +81,25 @@ def read_graph():
         source = link.source_node_id
         target = link.target_node_id
         if source not in V:
-            print source
+            # print source
             continue
         if target not in V:
-            print target
+            # print target
             continue
 
         E.append([source, target])
     
     # print len(V), len(E)
     return (V, E)
+
+
+def save_xy(layout):
+    for node in layout.pos:
+        print node, layout.pos[node].x, layout.pos[node].y
+
+    for node in layout.pos:
+        PhysicsTopologyNode.objects(host_id=node).update_one(x=layout.pos[node].x, \
+            y=layout.pos[node].y)
 
 
 class ForceDirected(object):
@@ -105,16 +117,17 @@ class ForceDirected(object):
     # 引力参数值
     VALUE_CA = 0.03
     # 斥力参数值
-    VALUE_CR = 2500
+    VALUE_CR = 1500
 
     # 界面显示参数
     FONT_SIZE = 25
     FONT_COLOR = (255, 255, 0)
 
-    NODE_RADIUS = 12
+    NODE_RADIUS = 8
     BLUE = (0, 0, 255)
     BLACK = (0, 0, 0)
     NODE_COLOR = (255, 0, 0)
+    EDGE_COLOR = (255, 255, 255)
 
     def __init__(self, grafo):
         super(ForceDirected, self).__init__()
@@ -160,6 +173,16 @@ class ForceDirected(object):
             (self.SCREEN_WIDTH / 2 - 10, self.SCREEN_HEIGHT / 2),
             (self.SCREEN_WIDTH / 2 + 10, self.SCREEN_HEIGHT / 2))
 
+        # Dibuja las aristas.
+        for edge in E:
+            node1 = edge[0]
+            node2 = edge[1]
+            pygame.draw.aaline(self.screen,
+                self.EDGE_COLOR,
+                (self.pos[node1].x, self.pos[node1].y),
+                (self.pos[node2].x, self.pos[node2].y))
+            #print self.pos[node1].x, self.pos[node1].y
+
         for node in V:
             pygame.draw.circle(self.screen,
                 self.NODE_COLOR,
@@ -168,10 +191,10 @@ class ForceDirected(object):
                 0
                 )
 
-            label_pos = self.label[node].get_rect()
-            label_pos.centerx = self.pos[node].x
-            label_pos.centery = self.pos[node].y
-            self.screen.blit(self.label[node], label_pos)
+            # label_pos = self.label[node].get_rect()
+            # label_pos.centerx = self.pos[node].x
+            # label_pos.centery = self.pos[node].y
+            # self.screen.blit(self.label[node], label_pos)
 
         pygame.display.flip()
 
@@ -190,13 +213,12 @@ class ForceDirected(object):
         for x in xrange(1,self.iters):
             self.step()
 
-        # 显示节点坐标
-        for node in V:
-            print self.pos[node].x, self.pos[node].y
+        # # 显示节点坐标
+        # for node in V:
+        #     print self.pos[node].x, self.pos[node].y
 
         # 界面显示
         self.screen()
-        signal.pause()
 
     # Realiza una iteracion del algoritmo
     def step(self):
@@ -306,13 +328,18 @@ class ForceDirected(object):
 
 
 def main():
-    G = read_graph()
+    # 读取物理拓扑数据
+    G = read_topology()
     #G = read_file("samples/davidson-harel")
 
+    # 计算节点坐标
     layout = ForceDirected(grafo=G)
 
     layout.layout()
 
+    # 保存节点坐标
+    save_xy(layout)
+    signal.pause()
 
 if __name__ == '__main__':
     main()

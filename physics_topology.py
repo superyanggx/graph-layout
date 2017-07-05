@@ -8,7 +8,7 @@ models
 import time
 from mongoengine import (
     Document, StringField, BooleanField, IntField,
-    DateTimeField, ReferenceField, CASCADE
+    DateTimeField, ReferenceField, CASCADE, FloatField
 )
 
 
@@ -16,19 +16,20 @@ class PhysicsTopologyNode(Document):
     """
     docstring for PhysicsTopologyNode
     """
+    x = FloatField()
+    y = FloatField()
 
     name = StringField()        # 节点名称（主机名称，交换机名称)
     host_id = StringField()     # 节点的host_id
     node_ip = StringField()     # node deploy ip
     node_type = StringField()   # host_type的8位字典
 
-    linked = BooleanField()     # be single node
+    linked  = StringField()    # be single node
     weight = IntField(default=10)   # default 10, 10-100
-    timestamp = DateTimeField()
+    # timestamp = DateTimeField()
     version = IntField()
     # author = StringField()
 
-    abandon = IntField(required=True, default=1)
     server_date = IntField(required=True, default=int(time.time() * 1000))
     public_date = IntField(required=True, default=int(time.time() * 1000))
     latest_date = IntField(required=True, default=int(time.time() * 1000))
@@ -66,11 +67,10 @@ class PhysicsTopologyLink(Document):
     target_node_ifip = StringField()
     target_node_ifmac = StringField()
 
-    timestamp = DateTimeField()
+    # timestamp = DateTimeField()
     version = IntField()
     # author = StringField(default='')
 
-    abandon = IntField(required=True, default=1)
     server_date = IntField(required=True, default=int(time.time() * 1000))
     public_date = IntField(required=True, default=int(time.time() * 1000))
     latest_date = IntField(required=True, default=int(time.time() * 1000))
@@ -83,4 +83,3 @@ class PhysicsTopologyLink(Document):
             ('source_node_id', 'source_node_if_id', 'target_node_id', 'target_node_if_id')
         ]
     }
-
