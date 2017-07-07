@@ -71,13 +71,13 @@ def read_topology():
 
     count = 0
     limit = 500
-    for node in PhysicsTopologyNode.objects():
+    for node in PhysicsTopologyNode.objects(version=8):
         V.append(node.host_id)
         count += 1
         if count >= limit:
             break
 
-    for link in PhysicsTopologyLink.objects():
+    for link in PhysicsTopologyLink.objects(version=8):
         source = link.source_node_id
         target = link.target_node_id
         if source not in V:
@@ -98,7 +98,7 @@ def save_xy(layout):
         print node, layout.pos[node].x, layout.pos[node].y
 
     for node in layout.pos:
-        PhysicsTopologyNode.objects(host_id=node).update_one(x=layout.pos[node].x, \
+        PhysicsTopologyNode.objects(host_id=node, version=8).update_one(x=layout.pos[node].x, \
             y=layout.pos[node].y)
 
 
@@ -113,11 +113,11 @@ class ForceDirected(object):
     INITIAL_TEMPERATURE = SCREEN_WIDTH / 10
 
     # 循环次数
-    LIMIT_ITERS = 100
+    LIMIT_ITERS = 500
     # 引力参数值
     VALUE_CA = 0.03
     # 斥力参数值
-    VALUE_CR = 1500
+    VALUE_CR = 1000
 
     # 界面显示参数
     FONT_SIZE = 25
